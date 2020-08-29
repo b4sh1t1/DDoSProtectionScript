@@ -170,6 +170,87 @@ iptables -A INPUT -p icmp -m icmp -m limit --limit 1/second -j ACCEPT
 iptables -A INPUT -m recent --name portscan --rcheck --seconds 86400 -j portscan
 iptables -A INPUT -m recent --name UDP_FLOOD --rcheck --seconds 86400 -j portscan 
 iptables -A INPUT -p tcp -m tcp -m recent -m state --state NEW --name portscan --set -j portscan 
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -m limit --limit 10/sec --limit-burst 15 -j ACCEPT
+iptables -A INPUT -p tcp --sport 80 --syn -m state --state NEW -m limit --limit 10/sec --limit-burst 15 -j ACCEPT
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport XMR DROP
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport 80 --dport 30000:60000 -m length --length 44 -m string --hex-string '|00004000|' --algo kmp -j DROP 
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport XMRDROP 
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport XMR DROP 
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport 80 --dport 30000:60000 -m length --length 0 -m string --hex-string '|00004000|' --algo kmp -j DROP 
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport 80 --dport 30000:60000 -m length --length 60 -m string --hex-string '|00004000|' --algo kmp -j DROP 
+iptables -t mangle -A PREROUTING -p tcp --sport 80  -m length --length 60 -j DROP
+iptables -t mangle -A PREROUTING -p tcp --sport 80  -m length --length 0 -j DROP
+iptables -t mangle -A PREROUTING -p tcp --sport 443  -m length --length 60 -j DROP
+iptables -t mangle -A PREROUTING -p tcp --sport 443  -m length --length 0 -j DROP
+iptables -t mangle -A PREROUTING -p tcp --sport 443  -m length --length 44 -j DROP
+iptables -t mangle -A PREROUTING -p tcp --sport 80  -m length --length 0 -j DROP
+sleep 5
+iptables -t mangle -A PREROUTING -p udp --sport 37810 -m comment --comment "DVR ATTACK"-j DROP # FN DROP
+tables -t mangle -A PREROUTING -p udp --sport 7001 -m comment --comment "AFS ATTACK" -j DROP # OVH-KILL
+iptables -I INPUT -p udp -m length --length 100:140 -m string --string "nAFS" --algo kmp -m comment --comment "AFS ATTACK" -j DROP # OVH-KILL
+iptables -I INPUT -p udp -m length --length 100:140 -m string --string "OpenAFS" --algo kmp -m comment --comment "AFS ATTACK" -j DROP # OVH-KILL
+iptables -t mangle -A PREROUTING -p udp --sport 17185 -m comment --comment "vxWorks-VoIP ATTACK" -j DROP # OVH-SLAP
+iptables -t mangle -A PREROUTING -p udp -m multiport --sports 3072,3702 -m comment --comment "WSD ATTACK" -j DROP # 
+iptables -t mangle -A PREROUTING -p tcp -m multiport --sports 3072,3702 -m comment --comment "WSD ATTACK" -j DROP # OVH-DOWNV2
+iptables -t mangle -A PREROUTING -p udp --sport 3283 -m length --length 1048 -m comment --comment "ARD ATTACK" -j DROP # OVH-CRUSHV2
+iptables -t mangle -A PREROUTING -p udp --sport 3283 -m length --length 1048 -m comment --comment "ARD ATTACK" -j DROP # OVH-CRUSHV1
+iptables -t mangle -A PREROUTING -p udp --sport 177 -m comment --comment "XDMCP ATTACK" -j DROP # NFO-LAG
+iptables -t mangle -A PREROUTING -p udp --sport 6881 -m length --length 320:330 -m comment --comment "BitTorrent ATTACK" -j DROP # NFO-CLAP
+iptables -t mangle -A PREROUTING -p udp -m length --length 280:300 --sport 32414 -m comment --comment "PlexMediaServers ATTACK" -j DROP # R6-LAG
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK SYN,ACK --sport XMR DROP 
+iptables -t mangle -I PREROUTING -p tcp --tcp-flags SYN,ACK 
+iptables -A INPUT -m string --algo bm --hex-string "|c6 9a 0b c2 00 164|" -j DROP 
+iptables -A INPUT -m string --algo bm --hex-string "|4d a3 c0 da 2a 84 0f da 50 184|" -j DROP 
+iptables -A INPUT -m string --algo bm --hex-string "|34 89 5b 08 00 004|" -j DROP   
+iptables -A INPUT -m string --algo bm --hex-string "|33 40 28 97 08 00 45 004|" -j DROP 
+iptables -A INPUT -m string --algo bm --hex-string "|05 a0 9c a1 00 00 33 06 b1 39 33 0f 07 90 33 444|" -j DROP 
+iptables -A INPUT -m string --algo bm --hex-string "|29 47 82 d3 04 51 bf a6 50 184|" -j DROP 
+iptables -A INPUT -m string --algo bm --hex-string "|60 0a 33 8e fc 50 184|" -j DROP 
+iptables -A INPUT -m string --algo bm --hex-string "|5d 4b 81 9d 0d d0 cab|" -j DROP
+iptables -A INPUT -m string --algo bm --hex-string "|4b87bc1a68e6b8b35017|" -j DROP 
+#block udp with a 0-byte payload
+iptables -A INPUT -p udp -m u32 --u32 "22&0xFFFF=0x0008" -j DROP
+#block all packets from ips ending in .255.255
+iptables -A INPUT -m u32 --u32 "12&0xFFFF=0xFFFF" -j DROP
+#block common Camfrog-specific attacks
+iptables -A INPUT -m u32 --u32 "28&0x00000FF0=0xFEDFFFFF" -j DROP
+#block udp containing "farewall"
+iptables -A INPUT -m string --algo bm --from 28 --to 29 --string "farewell" -j DROP
+#block udp starting with alternating spaces
+iptables -A INPUT -p udp -m u32 --u32 "28 & 0x00FF00FF = 0x00200020 && 32 & 0x00FF00FF = 0x00200020 && 36 & 0x00FF00FF = 0x00200020 && 40 & 0x00FF00FF = 0x00200020" -j DROP
+#block tcp ack 0 of length 40
+iptables -I INPUT -p tcp -m tcp -m string --hex-string "|000000005010|" --algo kmp --from 28 --to 29 -m length --length 40 -j DROP
+#block udp containing "SAMP"
+iptables -I INPUT -p udp -m udp -m string --hex-string "|53414d50|" --algo kmp --from 28 --to 29 -j DROP
+#block udp starting with "std" and 00s
+iptables -I INPUT -p udp -m udp -m string --hex-string "|7374640000000000|" --algo kmp --from 28 --to 29 -j DROP
+#block udp containing 16 null (00) chars
+iptables -I INPUT -p udp -m udp -m string --hex-string "|00000000000000000000000000000000|" --algo kmp --from 32 --to 33 -j DROP
+#block udp containing "AAAAAAAAAAAAAAAA"
+iptables -A INPUT -p udp -m udp -m string --algo bm --from 32 --to 33 --string "AAAAAAAAAAAAAAAA" -j DROP
+#block udp containing "0123456789ABCDE"
+iptables -A INPUT -p udp -m udp -m string --algo bm --from 28 --to 29 --string "0123456789ABCDE" -j DROP
+#block all packets from ips ending in .0.0
+iptables -A INPUT -m u32 --u32 "12&0xFFFF=0" -j DROP
+#block Source Split Packets
+iptables -A INPUT -p udp -m u32 --u32 "26&0xFFFFFFFF=0xfeff" -j DROP
+#block udp containing "0123456789"
+iptables -A INPUT -p udp -m udp -m string --algo bm --from 44 --to 45 --string "0123456789" -j DROP
+#block udp containing "a cat is fine too"
+iptables -A INPUT -p udp -m udp -m string --algo bm --from 28 --to 29 --string "A cat is fine too" -j DROP
+#block udp containing "flood"
+iptables -A INPUT -p udp -m udp -m string --algo bm --from 28 --to 29 --string "flood" -j DROP
+#block udp containing "q00000000000000"
+iptables -A INPUT -m string --algo bm --from 32 --to 33 --string "q00000000000000" -j DROP
+#block udp containing "statusResponse"
+iptables -A INPUT -m string --algo bm --from 32 --to 33 --string "statusResponse" -j DROP
+#block udp methode "NTP"
+iptables -A INPUT -i lo -p udp --destination-port 123 -j DROP
+iptables -A INPUT -p udp --source-port 123:123 -m state --state ESTABLISHED -j DROP
+#block udp methode "CODE"
+iptables -I INPUT -p udp -m udp -m string --hex-string "|ffffffff6765746368616c6c656e676520302022|" --algo kmp -j DROP
+#block udp methode "SSDP"
+iptables -I INPUT -p udp --dport 16000:29000 -m string --to 75 --algo bm --string 'HTTP/1.1 200 OK' -j DROP
 echo $done
 
 
