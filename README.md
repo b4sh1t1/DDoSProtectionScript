@@ -24,3 +24,6 @@ What does this protect my server from?
 - R6-LAG 
 - Kill-Allv1 method 
 - Custom STD
+
+
+Other things i dont feel like listing lol.
