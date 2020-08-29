@@ -22,7 +22,7 @@ What does this protect my server from?
 - OVH-CRUSHV1 method 
 - NFO-CLAP method 
 - R6-LAG 
-- Kill-Allv1 method 
+- KILL-ALLV1 method 
 - Custom STD
 
 
