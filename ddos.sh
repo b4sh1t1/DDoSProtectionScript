@@ -12,9 +12,6 @@
 # OGU: obstacles
 # Twitter: @ItsObstacles
 
-done = "You're done now! Your server is now under some protection!"
-
-
 iptables -t mangle -A PREROUTING -m conntrack --ctstate INVALID -j DROP
 iptables -A INPUT -m state --state INVALID -j DROP
 iptables -A FORWARD -m state --state INVALID -j DROP
@@ -251,6 +248,5 @@ iptables -A INPUT -p udp --source-port 123:123 -m state --state ESTABLISHED -j D
 iptables -I INPUT -p udp -m udp -m string --hex-string "|ffffffff6765746368616c6c656e676520302022|" --algo kmp -j DROP
 #block udp methode "SSDP"
 iptables -I INPUT -p udp --dport 16000:29000 -m string --to 75 --algo bm --string 'HTTP/1.1 200 OK' -j DROP
-echo $done
 
 
